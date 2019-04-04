@@ -72,7 +72,7 @@ type Constructor interface {
 	Columns(schema, tableName string, whitelist, blacklist []string) ([]Column, error)
 	PrimaryKeyInfo(schema, tableName string) (*PrimaryKey, error)
 	ForeignKeyInfo(schema, tableName string) ([]ForeignKey, error)
-
+	UniqueKeyInfo(schema, tableName string) ([]*UniqueKey, error)
 	// TranslateColumnType takes a Database column type and returns a go column type.
 	TranslateColumnType(Column) Column
 }
@@ -109,6 +109,10 @@ func Tables(c Constructor, schema string, whitelist, blacklist []string) ([]Tabl
 
 		if t.FKeys, err = c.ForeignKeyInfo(schema, name); err != nil {
 			return nil, errors.Wrapf(err, "unable to fetch table fkey info (%s)", name)
+		}
+
+		if t.UKeys, err = c.UniqueKeyInfo(schema, name); err != nil {
+			return nil, errors.Wrapf(err, "unable to fetch table ukey info (%s)", name)
 		}
 
 		filterForeignKeys(&t, whitelist, blacklist)

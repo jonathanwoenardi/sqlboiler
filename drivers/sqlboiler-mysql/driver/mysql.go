@@ -340,6 +340,66 @@ func (m *MySQLDriver) ForeignKeyInfo(schema, tableName string) ([]drivers.Foreig
 	return fkeys, nil
 }
 
+func (m *MySQLDriver) fetchConstraintColumns(schema, tableName, constraintName string) (columns []string, err error) {
+	queryColumns := `
+	select kcu.column_name
+	from   information_schema.key_column_usage as kcu
+	where  table_name = ? and constraint_name = ? and table_schema = ? order by ORDINAL_POSITION;`
+
+	var rows *sql.Rows
+	if rows, err = m.conn.Query(queryColumns, tableName, constraintName, schema); err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var column string
+
+		err = rows.Scan(&column)
+		if err != nil {
+			return nil, err
+		}
+
+		columns = append(columns, column)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return
+}
+
+// UniqueKeyInfo retrieves the unique keys for a given table name.
+func (m *MySQLDriver) UniqueKeyInfo(schema, tableName string) (ukeys []*drivers.UniqueKey, err error) {
+	query := `
+	select tc.constraint_name
+	from information_schema.table_constraints as tc
+	where tc.table_name = ? and (tc.constraint_type = 'UNIQUE' OR tc.constraint_type = 'PRIMARY KEY') and tc.table_schema = ?;`
+
+	rows, err := m.conn.Query(query, tableName, schema)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		ukey := &drivers.UniqueKey{Name: name}
+		ukey.Columns, err = m.fetchConstraintColumns(schema, tableName, name)
+		if err != nil {
+			return
+		}
+		ukeys = append(ukeys, ukey)
+	}
+	return
+}
+
 // TranslateColumnType converts mysql database types to Go types, for example
 // "varchar" to "string" and "bigint" to "int64". It returns this parsed data
 // as a Column object.

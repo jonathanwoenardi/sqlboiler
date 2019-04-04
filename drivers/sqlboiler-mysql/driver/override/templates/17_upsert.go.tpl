@@ -29,11 +29,9 @@ func (o *{{$alias.UpSingular}}) UpsertP({{if .NoContext}}exec boil.Executor{{els
 
 {{end -}}
 
-var mySQL{{$alias.UpSingular}}UniqueColumns = []string{
-{{- range $i, $col := .Table.Columns -}}
-	{{- if $col.Unique}}
-	"{{$col.Name}}",
-	{{- end -}}
+var mySQL{{$alias.UpSingular}}UniqueColumns = map[string][]string{
+{{- range _, $col := .Table.UKeys -}}
+	"{{$col.Name}}": []string{"{{ StringsJoin $col.Columns ", "}}"},
 {{- end}}
 }
 
@@ -53,7 +51,7 @@ func (o *{{$alias.UpSingular}}) Upsert({{if .NoContext}}exec boil.Executor{{else
 	{{- end}}
 
 	nzDefaults := queries.NonZeroDefaultSet({{$alias.DownSingular}}ColumnsWithDefault, o)
-	nzUniques := queries.NonZeroDefaultSet(mySQL{{$alias.UpSingular}}UniqueColumns, o)
+	nzUniques := queries.MatchNonZeroDefaultSet(mySQL{{$alias.UpSingular}}UniqueColumns, o)
 
 	if len(nzUniques) == 0 {
 		return errors.New("cannot upsert with a table that cannot conflict on a unique column")
