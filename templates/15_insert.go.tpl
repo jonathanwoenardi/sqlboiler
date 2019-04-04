@@ -122,7 +122,7 @@ func (o *{{$alias.UpSingular}}) Insert({{if .NoContext}}exec boil.Executor{{else
 	if err != nil {
 		return errors.Wrap(err, "{{.PkgName}}: unable to insert into {{.Table.Name}}")
 	}
-	
+
 	{{if $canLastInsertID -}}
 	var lastID int64
 	{{- end}}
@@ -141,7 +141,9 @@ func (o *{{$alias.UpSingular}}) Insert({{if .NoContext}}exec boil.Executor{{else
 	{{$colName := index .Table.PKey.Columns 0 -}}
 	{{- $col := .Table.GetColumn $colName -}}
 	{{- $colTitled := $colName | titleCase}}
-	o.{{$colTitled}} = {{$col.Type}}(lastID)
+	if o.{{$colTitled}} == 0 {
+		o.{{$colTitled}} = {{$col.Type}}(lastID)
+	}
 	if lastID != 0 && len(cache.retMapping) == 1 && cache.retMapping[0] == {{$alias.DownSingular}}Mapping["{{$colTitled}}"] {
 		goto CacheNoHooks
 	}
