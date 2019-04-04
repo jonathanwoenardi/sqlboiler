@@ -30,8 +30,8 @@ func (o *{{$alias.UpSingular}}) UpsertP({{if .NoContext}}exec boil.Executor{{els
 {{end -}}
 
 var mySQL{{$alias.UpSingular}}UniqueColumns = map[string][]string{
-{{- range _, $col := .Table.UKeys -}}
-	"{{$col.Name}}": []string{"{{ StringsJoin $col.Columns ", "}}"},
+{{- range $idx, $col := .Table.UKeys -}}
+	"{{$col.Name}}": []string{"{{ $col.Columns | join "\", \""}}"},
 {{- end}}
 }
 
