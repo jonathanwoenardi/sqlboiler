@@ -22,6 +22,12 @@ type ForeignKey struct {
 	ForeignColumnUnique   bool   `json:"foreign_column_unique"`
 }
 
+// UniqueKey represents a unique key constraint in a database
+type UniqueKey struct {
+	Name    string   `json:"name"`
+	Columns []string `json:"columns"`
+}
+
 // SQLColumnDef formats a column name and type like an SQL column definition.
 type SQLColumnDef struct {
 	Name string

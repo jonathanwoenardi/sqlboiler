@@ -97,6 +97,18 @@ func (m testMockDriver) PrimaryKeyInfo(schema, tableName string) (*PrimaryKey, e
 	}[tableName], nil
 }
 
+func (m testMockDriver) UniqueKeyInfo(schema, tableName string) ([]*UniqueKey, error) {
+	return map[string][]*UniqueKey{
+		"pilots":          []*UniqueKey{{Name: "pilot_id_pkey", Columns: []string{"id"}}},
+		"airports":        []*UniqueKey{{Name: "airport_id_pkey", Columns: []string{"id"}}},
+		"jets":            []*UniqueKey{{Name: "jet_id_pkey", Columns: []string{"id"}}},
+		"licenses":        []*UniqueKey{{Name: "license_id_pkey", Columns: []string{"id"}}},
+		"hangars":         []*UniqueKey{{Name: "hangar_id_pkey", Columns: []string{"id"}}},
+		"languages":       []*UniqueKey{{Name: "language_id_pkey", Columns: []string{"id"}}},
+		"pilot_languages": []*UniqueKey{{Name: "pilot_languages_pkey", Columns: []string{"pilot_id", "language_id"}}},
+	}[tableName], nil
+}
+
 // RightQuote is the quoting character for the right side of the identifier
 func (m testMockDriver) RightQuote() byte {
 	return '"'

@@ -41,3 +41,42 @@ func NonZeroDefaultSet(defaults []string, obj interface{}) []string {
 
 	return c
 }
+
+// MatchNonZeroDefaultSet returns the non zero value fields included in the unique key map
+func MatchNonZeroDefaultSet(uKeyMap map[string][]string, obj interface{}) []string {
+	val := reflect.Indirect(reflect.ValueOf(obj))
+	typ := val.Type()
+	nf := typ.NumField()
+
+	for _, columns := range uKeyMap {
+		c := make([]string, 0)
+		for _, def := range columns {
+			found := false
+			for i := 0; i < nf; i++ {
+				field := typ.Field(i)
+				name, _ := getBoilTag(field)
+
+				if name != def {
+					continue
+				}
+
+				found = true
+				fieldVal := val.Field(i)
+
+				zero := reflect.Zero(fieldVal.Type())
+				if !reflect.DeepEqual(zero.Interface(), fieldVal.Interface()) {
+					c = append(c, def)
+				}
+				break
+			}
+
+			if !found {
+				break
+			}
+		}
+		if len(columns) == len(c) {
+			return c
+		}
+	}
+	return nil
+}
